@@ -9,6 +9,8 @@ import paymentTypeRouter from "./routers/PaymentTypeRouter";
 import paymeRouter from "./routers/PaymeRouter";
 import providerRouter from "./routers/ProviderRouter";
 import authenticateToken from "./middilwares/TwtAuth";
+import cors from "cors";
+
 
 
 const app: Application = express();
