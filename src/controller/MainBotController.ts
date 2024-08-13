@@ -17,6 +17,8 @@ bot.start(async (ctx) => {
             ])
                 .resize()
         );
+    }else{
+        await userHome(ctx)
     }
 
 });
