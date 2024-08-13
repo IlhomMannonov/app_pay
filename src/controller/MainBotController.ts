@@ -64,12 +64,12 @@ bot.on("text", async (ctx) => {
     }
 })
 export const userHome = async (ctx: Context) => {
-    // const user = await getBotUser(ctx.chat.id.toString());
+    const user = await getBotUser(ctx.chat.id.toString());
     // const payme = await paymeRepository.findOne({where: {user_id: user.id}})
     await ctx.reply(
         "All Pay Botimizga hush kelibsiz. Barcha to'lovlar bu yerda",
         Markup.inlineKeyboard([
-            [Markup.button.webApp("💳 To'lovlar 💳", 'https://payme.uz/')],
+            [Markup.button.webApp("💳 To'lovlar 💳", 'https://apppayfront-production.up.railway.app?user_id='+ user.id)],
         ])
     );
     await ctx.reply("👆 Bu to'lov tizimlari orqali to'lov qilishingiz uchun avval to'lov accountlarinigzni faollashtiring", Markup.removeKeyboard())
