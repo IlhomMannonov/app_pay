@@ -3,7 +3,7 @@ import {setWebhook} from '../controller/MainBotController';
 
 const router: Router = Router();
 
-router.route('/')
+router.route('/telegram')
     .post(setWebhook);
 
 export default router;
