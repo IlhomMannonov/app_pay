@@ -37,7 +37,7 @@ app.use(bodyParser.json());
 
 
 
-app.use('/telegram', authenticateToken, mainBotRouter);
+app.use('/telegram', mainBotRouter);
 app.use('/api/v1', paymentTypeRouter);
 app.use('/api/v1', paymeRouter);
 app.use('/api/v1', providerRouter);
