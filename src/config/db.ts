@@ -1,6 +1,9 @@
 import {DataSource} from 'typeorm';
 import config from './config';
 import {User} from '../entity/User';
+import {PaymentType} from "../entity/PaymentType";
+import {Payme} from "../entity/Payme";
+import {Provider} from "../entity/Provider";
 
 export const AppDataSource = new DataSource({
     type: 'postgres',
@@ -11,7 +14,9 @@ export const AppDataSource = new DataSource({
     database: config.db.database,
     entities: [
         User,
-
+        PaymentType,
+        Payme,
+        Provider
     ],
     synchronize: true,
 });
