@@ -23,6 +23,9 @@ export class Provider extends BaseEntityFull {
     @Column({type: 'varchar', length: 255, nullable: true})
     currency!: string;
 
+    @Column({type: 'varchar', length: 255, nullable: true})
+    type!: string;
+
     @Column({type: 'text', nullable: true})
     image_url!: string;
 

@@ -10,6 +10,7 @@ import paymeRouter from "./routers/PaymeRouter";
 import providerRouter from "./routers/ProviderRouter";
 import authenticateToken from "./middilwares/TwtAuth";
 import cors from "cors";
+import userRouter from "./routers/UserRouter";
 
 
 
@@ -40,6 +41,7 @@ app.use('/telegram', authenticateToken, mainBotRouter);
 app.use('/api/v1', paymentTypeRouter);
 app.use('/api/v1', paymeRouter);
 app.use('/api/v1', providerRouter);
+app.use('/api/v1', userRouter);
 
 app.use(errorHandler);
 

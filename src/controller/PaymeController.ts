@@ -5,7 +5,6 @@ import {RestException} from "../middilwares/RestException";
 import {Payme} from "../entity/Payme";
 import axios from "axios";
 import {Provider} from "../entity/Provider";
-import authenticateToken from '../middilwares/TwtAuth';
 
 const paymentTypeRepository = AppDataSource.getRepository(PaymentType);
 const paymeRepository = AppDataSource.getRepository(Payme);
@@ -21,6 +20,7 @@ export const payme_login = async (req: Request, res: Response, next: NextFunctio
             throw RestException.badRequest("username, user_id and password are required");
         }
 
+        if (!validPhone(username)) throw RestException.badRequest('Telefon raqam formati noto\'g\'ri')
         // paymeRepository orqali foydalanuvchini qidirish
         const payme = await getPaymeUserId(user_id);
         if (!payme) {
@@ -63,7 +63,7 @@ export const confirm_sms = async (req: Request, res: Response, next: NextFunctio
 
         if (payme) {
 
-            const res = await axios.post(process.env.PAYME_URL + "sessions.activate", {
+            const response = await axios.post(process.env.PAYME_URL + "sessions.activate", {
                 params: {
                     code: code,
                     to_reserve: false,
@@ -74,7 +74,7 @@ export const confirm_sms = async (req: Request, res: Response, next: NextFunctio
                     'API-SESSION': payme.session
                 }
             });
-            payme.session = res.headers['api-session'];
+            payme.session = response.headers['api-session'];
             await paymeRepository.save(payme);
             const registerDevice: any = await axios.post(process.env.PAYME_URL + 'devices.register', {
                 params: {
@@ -85,7 +85,7 @@ export const confirm_sms = async (req: Request, res: Response, next: NextFunctio
                 method: "devices.register",
             }, {
                 headers: {
-                    'API-SESSION': res.headers['api-session']
+                    'API-SESSION': response.headers['api-session']
                 }
             });
             if (registerDevice.data.result && registerDevice.data.result.key) {
@@ -93,10 +93,12 @@ export const confirm_sms = async (req: Request, res: Response, next: NextFunctio
                 payme.device_id = registerDevice.data.result._id;
                 payme.device_key = registerDevice.data.result.key;
                 await paymeRepository.save(payme);
+            } else {
+                res.json({success: false, message: "Sms kod noto'g'ri!"})
+                return;
             }
         }
-        console.log('registerDevice')
-        res.json('succes')
+        res.json({success: true})
 
     } catch (error) {
         next(error);
@@ -106,44 +108,9 @@ export const confirm_sms = async (req: Request, res: Response, next: NextFunctio
 export const all_cards = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
         const {user_id} = req.query;
-        if (typeof user_id !== 'string') {
-            throw RestException.badRequest("user_id is required and must be a string");
-        }
+        if (typeof user_id !== 'string') throw RestException.badRequest("user_id is required and must be a string");
 
-        // paymeRepository orqali foydalanuvchini qidirish
-        const payme = await getPaymeUserId(Number.parseInt(user_id));
-
-        if (!payme) {
-            throw RestException.badRequest("Payme not found");
-        }
-        const login = await paymeLogin({
-            params: {
-                login: payme.phone_number,
-                password: payme.password
-            },
-            method: "users.log_in",
-        }, {
-            'Device': payme.device
-        }, payme);
-        console.log(login)
-
-        const myCards: any = await axios.post(process.env.PAYME_URL + 'cards.get_all', {
-            method: 'cards.get_all'
-        }, {
-            headers: {
-                'API-SESSION': login.headers['api-session'],
-                'Device': payme.device
-            }
-        });
-        const cards = myCards.data.result.cards.map((card: any) => ({
-            id: card._id,
-            name: card.name,
-            number: card.number,
-            expire: card.expire,
-            active: card.active,
-            balance: card.balance,
-        }));
-
+        const cards = await payme_cards(user_id);
         res.json(cards);
 
     } catch (error) {
@@ -165,8 +132,12 @@ export const pay_to_provider = async (req: Request, res: Response, next: NextFun
     }
 }
 
+export const chek_payme_login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 
-const paymeLogin = async (body: any, headers: any, payme: any) => {
+}
+
+
+export const paymeLogin = async (body: any, headers: any, payme: any) => {
     const config = {
         headers: {
             'Content-Type': 'text/plain',
@@ -197,4 +168,46 @@ export const getPaymeUserId = async (user_id: number) => {
         }));
     } else
         return payme;
+}
+
+function validPhone(phoneNumber: string) {
+    const uzbPhoneRegex = /^\+998\s?\(?[0-9]{2}\)?\s?[0-9]{3}\s?[0-9]{2}\s?[0-9]{2}$/;
+    return uzbPhoneRegex.test(phoneNumber);
+}
+
+export const payme_cards = async (user_id: string) => {
+
+
+    // paymeRepository orqali foydalanuvchini qidirish
+    const payme = await getPaymeUserId(Number.parseInt(user_id));
+
+    if (!payme) {
+        throw RestException.badRequest("Payme not found");
+    }
+    const login = await paymeLogin({
+        params: {
+            login: payme.phone_number,
+            password: payme.password
+        },
+        method: "users.log_in",
+    }, {
+        'Device': payme.device
+    }, payme);
+
+    const myCards: any = await axios.post(process.env.PAYME_URL + 'cards.get_all', {
+        method: 'cards.get_all'
+    }, {
+        headers: {
+            'API-SESSION': login.headers['api-session'],
+            'Device': payme.device
+        }
+    });
+    return myCards.data.result.cards.map((card: any) => ({
+        id: card._id,
+        name: card.name,
+        number: card.number,
+        expire: card.expire,
+        active: card.active,
+        balance: card.balance,
+    }));
 }

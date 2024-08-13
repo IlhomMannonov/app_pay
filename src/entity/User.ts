@@ -45,5 +45,7 @@ export class User extends BaseEntityFull {
     @Column({type: 'boolean', default: false})
     is_bot_user!: boolean;
 
+    profile_url!:string;
+
 
 }
