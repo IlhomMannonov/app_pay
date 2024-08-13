@@ -69,7 +69,7 @@ export const userHome = async (ctx: Context) => {
     await ctx.reply(
         "All Pay Botimizga hush kelibsiz. Barcha to'lovlar bu yerda",
         Markup.inlineKeyboard([
-            [Markup.button.webApp("💳 To'lovlar 💳", 'https://apppayfront-production.up.railway.app?user_id='+ user.id)],
+            [Markup.button.webApp("💳 To'lovlar 💳", 'https://aviator.megamining.cc/app_pay?user_id='+ user.id)],
         ])
     );
     await ctx.reply("👆 Bu to'lov tizimlari orqali to'lov qilishingiz uchun avval to'lov accountlarinigzni faollashtiring", Markup.removeKeyboard())
