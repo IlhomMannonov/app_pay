@@ -11,4 +11,6 @@ router.route('/payment-check')
 router.route('/payment-type-cards')
     .post(payment_type_cards);
 
+
+
 export default router;

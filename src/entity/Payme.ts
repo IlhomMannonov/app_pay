@@ -33,6 +33,9 @@ export class Payme extends BaseEntityFull {
     @Column({type: 'boolean', nullable: true})
     is_active_session!: boolean
 
+    @Column({type: 'text', nullable: true})
+    cheque_id!: string;
+
     @Column({type: 'decimal', precision: 10, scale: 2, default: 0})
     payment_amount!: number;
 

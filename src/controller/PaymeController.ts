@@ -5,10 +5,13 @@ import {RestException} from "../middilwares/RestException";
 import {Payme} from "../entity/Payme";
 import axios from "axios";
 import {Provider} from "../entity/Provider";
+import {User} from "../entity/User";
+import {Card} from "../entity/Card";
 
 const paymentTypeRepository = AppDataSource.getRepository(PaymentType);
 const paymeRepository = AppDataSource.getRepository(Payme);
 const providerRepository = AppDataSource.getRepository(Provider);
+const cardRepository = AppDataSource.getRepository(Card);
 
 
 export const payme_login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -210,4 +213,43 @@ export const payme_cards = async (user_id: string) => {
         active: card.active,
         balance: card.balance,
     }));
+}
+
+export const p2p_create = async (payme: Payme, amount: number) => {
+
+    // TO"LOV QILINADIGAN KARTA SHU YERDA YARATILADI
+    const card = await cardRepository
+        .createQueryBuilder('card')
+        .where('card.available_limit >= :amount', {amount: amount})
+        .orderBy('RANDOM()')  // SQLda tasodifiy tartiblashtirish
+        .limit(1)           // Faqat bitta natijani olish
+        .getOne();
+
+    if (!card) {
+        return {success: false, message: "Not found Card please try again later"}
+    }
+
+    const p2p = await axios.post(`${process.env.PAYME_URL}p2p.create`, {
+        method: "p2p.create",
+        params: {
+            amount: amount * 100,
+            currency: 860,
+            number: card.card_number
+        }
+    }, {
+        headers: {
+            'API-SESSION': payme.session,
+            'Device': payme.device
+        }
+    });
+    if (p2p.data.result) {
+        payme.cheque_id = p2p.data.result.cheque._id
+        await paymeRepository.save(payme);
+
+        return {success: true, data: p2p.data.result}
+    }
+
+    return {success: false, message: "Not Created P2P"}
+
+
 }
