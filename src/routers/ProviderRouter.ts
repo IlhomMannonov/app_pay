@@ -1,6 +1,6 @@
 import {Router} from 'express';
 import {getAllProviders, getBiyId, provider_details} from "../controller/ProviderController";
-import {paying_provider} from "../controller/PaymentTypeController";
+import {confirm_pay, paying_provider} from "../controller/PaymentTypeController";
 
 const router: Router = Router();
 
@@ -15,6 +15,9 @@ router.route('/provider-details')
 
 router.route('/pay-to-provider')
     .post(paying_provider)
+
+router.route('/provider-confirm_pay')
+    .post(confirm_pay)
 
 
 export default router;

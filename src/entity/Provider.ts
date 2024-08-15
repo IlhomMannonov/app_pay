@@ -14,6 +14,9 @@ export class Provider extends BaseEntityFull {
     @Column({type: 'text', nullable: true})
     post_data_url!: string;
 
+    @Column({type: 'text', nullable: true})
+    update_balance_url!: string;
+
     @Column({type: 'decimal', precision: 10, scale: 2, default: 0})
     min_amount!: number;
 
