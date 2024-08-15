@@ -122,7 +122,7 @@ export const paying_provider = async (req: Request, res: Response, next: NextFun
         if (!provider) throw RestException.notFound("User")
 
 //     MAX VA MIN TEKSHIRAMIZ
-        if (amount < provider.min_amount && amount >= provider.max_amount) {
+        if (amount < provider.min_amount || amount >= provider.max_amount) {
             res.json({
                 success: false,
                 message: `Cheklov miqdorida emas! Minimal miqdor: ${provider.min_amount}, Maksimal miqdor: ${provider.max_amount}`
