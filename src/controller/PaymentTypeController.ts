@@ -100,8 +100,8 @@ export const paying_provider = async (req: Request, res: Response, next: NextFun
     try {
 
 
-        const {card_id, provider_id, payment_type_id, amount, user_id, account_id} = req.body;
-        if (!card_id || !provider_id || !payment_type_id || !amount || !account_id) throw RestException.badRequest("card_id, user_id, provider_id, payment_type_id, amount is Reuired")
+        const {card_id, provider_id, payment_type_id, amount, user_id, account_id, card_number} = req.body;
+        if (!card_id || !provider_id || !payment_type_id || !amount || !account_id || !card_number) throw RestException.badRequest("card_id, user_id, provider_id, payment_type_id, amount is Reuired")
 
         const paymentType = await paymentTypeRepository.findOne({
             where: {id: payment_type_id}
@@ -119,7 +119,7 @@ export const paying_provider = async (req: Request, res: Response, next: NextFun
         if (!provider) throw RestException.notFound("User")
 
 //     MAX VA MIN TEKSHIRAMIZ
-        if (amount > provider.min_amount || amount <= provider.max_amount) {
+        if (amount < provider.min_amount && amount >= provider.max_amount) {
             res.json({
                 success: false,
                 message: `Cheklov miqdorida emas! Minimal miqdor: ${provider.min_amount}, Maksimal miqdor: ${provider.max_amount}`
@@ -129,7 +129,7 @@ export const paying_provider = async (req: Request, res: Response, next: NextFun
 
         switch (paymentType.type) {
             case "payme": {
-                const pay_payme = await pay_with_payme(user, paymentType, card_id, provider, amount, account_id);
+                const pay_payme = await pay_with_payme(user, paymentType, card_id, provider, amount, account_id, card_number);
                 res.json(pay_payme)
                 return
             }
@@ -143,8 +143,8 @@ export const paying_provider = async (req: Request, res: Response, next: NextFun
 
 export const confirm_pay = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-        const {pay_type, user_id, code} = req.body;
-        if (!pay_type || !user_id || !code) throw RestException.badRequest("Required Pay type and User")
+        const {pay_type, user_id, code, card_number} = req.body;
+        if (!pay_type || !user_id || !code || card_number) throw RestException.badRequest("Required Pay type and User")
 
         switch (pay_type) {
             case "payme": {
@@ -169,6 +169,36 @@ export const confirm_pay = async (req: Request, res: Response, next: NextFunctio
                 });
 
                 if (confirm_res.data.result) {
+                    const transaction = await transactionRepository.findOne({
+                        where: {user_id: user_id, status: "pending_verify"},
+                        order: {id: 'DESC'}
+                    });
+                    if (!transaction) {
+                        res.json({success: false, message: "Transaction topilmadi"})
+                        return
+                    }
+
+                    const provider = await providerRepository.findOne({where: {id: transaction.provider_id}});
+                    if (!provider) {
+                        res.json({success: false, message: "Provider topilmadi"})
+                        return
+                    }
+
+                    const response = await axios.get(provider.update_balance_url, {
+                        params: {
+                            account_id: transaction.account_id,
+                            amount: transaction.amount,
+                            card: card_number
+                        }
+                    });
+                    if (!response.data.success) {
+                        res.json({success: false, message: "Something error"})
+                        return;
+                    }
+
+                    transaction.status = 'payed';
+                    await transactionRepository.save(transaction);
+                    // create_transaction(user, paymentType, provider, amount, account_id, card_number, Number(p2p_res.send_card_id))
                     res.json({success: true, data: confirm_res.data})
                 } else {
                     res.json({success: false, data: confirm_res.data, message: confirm_res.data.error.message})
@@ -183,7 +213,7 @@ export const confirm_pay = async (req: Request, res: Response, next: NextFunctio
 }
 
 
-const pay_with_payme = async (user: User, paymentType: PaymentType, card_id: string, provider: Provider, amount: number, account_id: number) => {
+const pay_with_payme = async (user: User, paymentType: PaymentType, card_id: string, provider: Provider, amount: number, account_id: number, card_number: string) => {
     const payme = await getPaymeUserId(user.id);
 
     if (!payme) return {success: false, message: "Payme account not found"}
@@ -230,6 +260,8 @@ const pay_with_payme = async (user: User, paymentType: PaymentType, card_id: str
         return {success: true, message: "Something error"}
 
     if (cheque_verify.data.result.method == 'otp') {
+        create_transaction(user, paymentType, provider, amount, account_id, card_number, Number(p2p_res.send_card_id), true)
+
         return {
             method: 'otp',
             type: paymentType.type,
@@ -252,11 +284,9 @@ const pay_with_payme = async (user: User, paymentType: PaymentType, card_id: str
             }
         });
         if (confirm_res.data.result) {
-            const update_balance_url = provider.update_balance_url;
-            axios.post(`${update_balance_url}`, {
-                account_id: account_id,
-                amount: amount
-            })
+
+            create_transaction(user, paymentType, provider, amount, account_id, card_number, Number(p2p_res.send_card_id), false)
+
             return {
                 method: 'payed',
                 type: paymentType.type,
@@ -276,16 +306,33 @@ const pay_with_payme = async (user: User, paymentType: PaymentType, card_id: str
 }
 
 
-const create_transaction = async (user: User, paymentType: PaymentType, card_id: string, provider: Provider, amount: number, account_id: number, card_number: string) => {
+const create_transaction = async (user: User, paymentType: PaymentType, provider: Provider, amount: number, account_id: number, card_number: string, send_card_id: number, two_step: boolean) => {
     switch (paymentType.type) {
         case "payme": {
 
+            var is_success_payed = false;
+            if (!two_step) {
+                const res = await axios.get(provider.update_balance_url, {
+                    params: {
+                        account_id: account_id,
+                        amount: amount,
+                        card: card_number
+                    }
+                });
+                if (res.data.success === true)
+                    is_success_payed = true;
 
-            axios.post(provider.update_balance_url, {
-                account_id: account_id,
-                amount: amount,
-                card:card_number
-            })
+            }
+            const tr = new Transaction();
+            tr.amount = amount;
+            tr.user_id = user.id;
+            tr.payment_type_id = paymentType.id;
+            tr.provider_id = provider.id;
+            tr.card_id = send_card_id
+            tr.account_id = account_id;
+            tr.status = is_success_payed ? "payed" : "pending_verify";
+
+            return await transactionRepository.save(transactionRepository.create(tr));
         }
     }
 }

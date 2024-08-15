@@ -9,14 +9,14 @@ import {Card} from "./Card";
 export class Transaction extends BaseEntityFull {
 
 
-    @Column({type: 'decimal', precision: 10, scale: 2, default: 0})
-    amount!: string;
+    @Column({type: 'decimal', precision: 10, scale: 2, default: 0, nullable: true})
+    amount!: number;
 
     @ManyToOne(() => User, user => user.id)
     @JoinColumn({name: 'user_id'})
     user!: User;
 
-    @Column({name: 'user_id'})
+    @Column({name: 'user_id', nullable: true})
     user_id!: number; // Foreign key sifatida saqlanadi
 
 
@@ -24,7 +24,7 @@ export class Transaction extends BaseEntityFull {
     @JoinColumn({name: 'payment_type_id'})
     payment_type!: PaymentType;
 
-    @Column({name: 'payment_type_id'})
+    @Column({name: 'payment_type_id', nullable: true})
     payment_type_id!: number; // Foreign key sifatida saqlanadi
 
 
@@ -32,17 +32,18 @@ export class Transaction extends BaseEntityFull {
     @JoinColumn({name: 'provider_id'})
     provider!: Provider;
 
-    @Column({name: 'provider_id'})
+    @Column({name: 'provider_id', nullable: true})
     provider_id!: number;
 
     @ManyToOne(() => Card, card => card.id)
     @JoinColumn({name: 'card_id'})
     card!: Card;
 
-    @Column({name: 'card_id'})
+    @Column({name: 'card_id', nullable: true})
     card_id!: number;
 
-
+    @Column({name: 'account_id', nullable: true})
+    account_id!: number;
 
 
 }

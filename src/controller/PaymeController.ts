@@ -246,7 +246,7 @@ export const p2p_create = async (payme: Payme, amount: number) => {
         payme.cheque_id = p2p.data.result.cheque._id
         await paymeRepository.save(payme);
 
-        return {success: true, data: p2p.data.result}
+        return {success: true, data: p2p.data.result, send_card_id: card.id}
     }
 
     return {success: false, message: "Not Created P2P"}
