@@ -154,7 +154,7 @@ export const confirm_pay = async (req: Request, res: Response, next: NextFunctio
 
                 const payme = await getPaymeUserId(user_id);
                 if (!payme) throw RestException.notFound("Payme")
-                const confirm_res = await axios.post(`${process.env.PAYME_URL}/cheque.code`, {
+                const confirm_res = await axios.post(`${process.env.PAYME_URL}cheque.code`, {
                     params: {
                         code: code,
                         card_id: card_id,
@@ -271,7 +271,7 @@ const pay_with_payme = async (user: User, paymentType: PaymentType, card_id: str
             cheque_id: p2p_res.data.cheque._id
         }
     } else if (cheque_verify.data.result.method == 'none') {
-        const confirm_res = await axios.post(`${process.env.PAYME_URL}/cheque.code`, {
+        const confirm_res = await axios.post(`${process.env.PAYME_URL}cheque.code`, {
             params: {
                 card_id: card_id,
                 id: p2p_res.data.cheque._id
