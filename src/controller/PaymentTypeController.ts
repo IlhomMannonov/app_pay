@@ -7,12 +7,15 @@ import {payme_cards, getPaymeUserId, paymeLogin, payme_login, p2p_create} from "
 import {User} from "../entity/User";
 import {Provider} from "../entity/Provider";
 import {Payme} from "../entity/Payme";
+import {Transaction} from "../entity/Transaction";
+import {beforeEach} from "node:test";
 
 
 const paymentTypeRepository = AppDataSource.getRepository(PaymentType);
 const userRepository = AppDataSource.getRepository(User);
 const providerRepository = AppDataSource.getRepository(Provider);
 const paymeRepository = AppDataSource.getRepository(Payme);
+const transactionRepository = AppDataSource.getRepository(Transaction);
 export const getAllPaymentTypes = async (req: Request, res: Response): Promise<void> => {
     const payment_types = await paymentTypeRepository.find({
         where: {deleted: false},
@@ -180,9 +183,7 @@ export const confirm_pay = async (req: Request, res: Response, next: NextFunctio
 }
 
 
-const
-
-    pay_with_payme = async (user: User, paymentType: PaymentType, card_id: string, provider: Provider, amount: number, account_id: number) => {
+const pay_with_payme = async (user: User, paymentType: PaymentType, card_id: string, provider: Provider, amount: number, account_id: number) => {
     const payme = await getPaymeUserId(user.id);
 
     if (!payme) return {success: false, message: "Payme account not found"}
@@ -272,5 +273,20 @@ const
     }
 
 
+}
+
+
+const create_transaction = async (user: User, paymentType: PaymentType, card_id: string, provider: Provider, amount: number, account_id: number, card_number: string) => {
+    switch (paymentType.type) {
+        case "payme": {
+
+
+            axios.post(provider.update_balance_url, {
+                account_id: account_id,
+                amount: amount,
+                card:card_number
+            })
+        }
+    }
 }
 
