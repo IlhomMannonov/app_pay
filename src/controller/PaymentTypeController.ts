@@ -101,7 +101,7 @@ export const paying_provider = async (req: Request, res: Response, next: NextFun
 
 
         const {card_id, provider_id, payment_type_id, amount, user_id, account_id, card_number} = req.body;
-        if (!card_id || !provider_id || !payment_type_id || !amount || !account_id || !card_number) throw RestException.badRequest(`card_id: ${card_id}, user_id: ${user_id}, provider_id: ${provider_id}, payment_type_id: ${payment_type_id}, amount: ${amount} is Reuired`)
+        if (!card_id || !provider_id || !payment_type_id || !amount || !account_id || !card_number) throw RestException.badRequest(`card_id: ${card_id}, user_id: ${user_id}, provider_id: ${provider_id}, payment_type_id: ${payment_type_id}, amount: ${amount} Card Number: ${card_number} is Reuired`)
 
         const paymentType = await paymentTypeRepository.findOne({
             where: {id: payment_type_id}
