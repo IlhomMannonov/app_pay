@@ -1,10 +1,11 @@
-import {DataSource, Transaction} from 'typeorm';
+import {DataSource} from 'typeorm';
 import config from './config';
 import {User} from '../entity/User';
 import {PaymentType} from "../entity/PaymentType";
 import {Payme} from "../entity/Payme";
 import {Provider} from "../entity/Provider";
 import {Card} from "../entity/Card";
+import {Transaction} from "../entity/Transaction";
 
 export const AppDataSource = new DataSource({
     type: 'postgres',

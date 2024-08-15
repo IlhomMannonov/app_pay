@@ -41,7 +41,7 @@ export const provider_details = async (req: Request, res: Response, next: NextFu
 
         if (!provider) throw RestException.notFound('Provider');
 
-        const data = await axios.get(provider.get_data_url, {
+        const data = await axios.post(provider.get_data_url, {
             params: {
                 'account_id': account_id
             }
